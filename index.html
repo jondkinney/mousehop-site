@@ -7,6 +7,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Apply the saved (or system-preferred) color theme before first paint.
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        var dark = stored ? stored === 'dark'
+          : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      } catch (e) {}
+    })();
+  </script>
   <title>Mousehop: share one mouse and keyboard across every machine</title>
   <meta name="description" content="Mousehop is an open-source software KVM — glide a single cursor, keyboard, and clipboard across your Linux, macOS, and Windows machines over the LAN. A fork of lan-mouse.">
   <meta property="og:title" content="Mousehop">
@@ -19,6 +30,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
+      color-scheme: light;
       --bg: #ffffff;
       --bg-tint: #f5f5fb;
       --line: #e6e6f0;
@@ -30,8 +42,25 @@
       --accent-soft: #c7d2fe;
       --code-bg: #1c1b2a;
       --code-text: #e9e7f6;
+      --nav-bg: rgba(255, 255, 255, 0.9);
       --max-width: 980px;
       --radius: 8px;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #14141c;
+      --bg-tint: #1e1e2b;
+      --line: #30303f;
+      --ink: #ececf3;
+      --ink-soft: #c2c2cf;
+      --muted: #8d8d9e;
+      --accent: #8b93f8;
+      --accent-deep: #aab2fc;
+      --accent-soft: #3c3a78;
+      --code-bg: #0d0d15;
+      --code-text: #e9e7f6;
+      --nav-bg: rgba(20, 20, 28, 0.85);
     }
 
     * { box-sizing: border-box; }
@@ -64,7 +93,7 @@
     nav {
       padding: 1rem 0;
       border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.9);
+      background: var(--nav-bg);
       backdrop-filter: blur(8px);
       position: sticky;
       top: 0;
@@ -96,6 +125,49 @@
     }
     nav ul a { color: var(--ink-soft); border: none; font-weight: 500; }
     nav ul a:hover { color: var(--accent); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.15rem;
+      height: 2.15rem;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: var(--bg-tint);
+      color: var(--ink-soft);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .theme-toggle:hover {
+      color: var(--accent);
+      border-color: var(--accent-soft);
+    }
+    .theme-toggle:active { transform: scale(0.92); }
+    .theme-toggle svg {
+      width: 1.15rem;
+      height: 1.15rem;
+      display: block;
+    }
+    .theme-toggle .icon-sun { display: none; }
+    html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+    html[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+
+    body, nav, .featured, .install-featured, .install-card, .install-source {
+      transition: background-color 0.25s ease, border-color 0.25s ease,
+                  color 0.25s ease;
+    }
 
     .hero {
       padding: 5rem 0 3.5rem;
@@ -174,7 +246,12 @@
       color: var(--ink);
       border-color: var(--line);
     }
-    .btn.secondary:hover { background: var(--ink); color: #fff; }
+    .btn.secondary:hover { background: var(--ink); color: var(--bg); }
+    .btn.sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+    .btn svg { width: 1.05em; height: 1.05em; flex-shrink: 0; }
 
     .shot {
       max-width: 880px;
@@ -390,6 +467,7 @@
     @media (max-width: 600px) {
       nav { padding: 0.85rem 0; }
       nav .container { flex-direction: column; gap: 0.8rem; }
+      .nav-right { flex-direction: column; gap: 0.85rem; }
       nav ul { flex-wrap: wrap; justify-content: center; gap: 0.6rem 1.3rem; }
       .hero { padding: 3rem 0 2.5rem; }
       section { padding: 3rem 0; }
@@ -401,12 +479,38 @@
 <nav>
   <div class="container">
     <a href="#" class="brand"><img src="assets/mousehop.svg" alt="">Mousehop</a>
-    <ul>
-      <li><a href="#features">Features</a></li>
-      <li><a href="#install">Install</a></li>
-      <li><a href="#start">Quick start</a></li>
-      <li><a href="https://github.com/jondkinney/mousehop">GitHub</a></li>
-    </ul>
+    <div class="nav-right">
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#install">Install</a></li>
+        <li><a href="#start">Quick start</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch color theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+        <a href="https://github.com/jondkinney/mousehop" class="btn secondary sm">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+          </svg>
+          GitHub
+        </a>
+        <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary sm">Download</a>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -423,7 +527,12 @@
     </p>
     <div class="cta">
       <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary">Download</a>
-      <a href="https://github.com/jondkinney/mousehop" class="btn secondary">View on GitHub</a>
+      <a href="https://github.com/jondkinney/mousehop" class="btn secondary">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+        </svg>
+        Star on GitHub
+      </a>
     </div>
   </section>
 
@@ -638,6 +747,24 @@ cargo build --release</code></pre>
     </p>
   </div>
 </footer>
+
+<script>
+  // Color-theme toggle — persists the choice and reflects it on the button.
+  (function () {
+    var toggle = document.getElementById('theme-toggle');
+    var root = document.documentElement;
+    function sync() {
+      toggle.setAttribute('aria-pressed', String(root.dataset.theme === 'dark'));
+    }
+    toggle.addEventListener('click', function () {
+      var next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try { localStorage.setItem('theme', next); } catch (e) {}
+      sync();
+    });
+    sync();
+  })();
+</script>
 
 </body>
 </html>
