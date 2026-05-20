@@ -440,8 +440,12 @@
       color: var(--code-text);
       padding: 1.1rem 1.35rem;
       border-radius: var(--radius);
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
+      /* Hard-wrap mid-URL ("github.com/jondk/inney…") looks broken,
+         so let long lines scroll horizontally inside the card
+         instead of breaking. Better fit for shell commands than the
+         old `pre-wrap` + `overflow-wrap: anywhere` combo. */
+      white-space: pre;
+      overflow-x: auto;
       font-size: 0.88rem;
       line-height: 1.55;
       margin: 1rem 0 0;
@@ -474,7 +478,10 @@
     }
     .install-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      /* 290px minmax gives ~3 cards at >= ~960px container width
+         (the typical desktop case here) while still letting the
+         middle viewport drop to 2-up cleanly. */
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
       gap: 1.25rem;
       margin-top: 1.25rem;
     }
@@ -499,6 +506,44 @@
       color: var(--muted);
       margin-top: 1.5rem;
     }
+    /* Wrapper around <pre> install commands; positions the
+       copy-to-clipboard button in the top-right of the code block. */
+    .code-block { position: relative; margin-top: 1rem; }
+    .code-block pre { margin: 0; }
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      padding: 0;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.72);
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .code-block:hover .copy-btn,
+    .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      color: rgba(255, 255, 255, 0.95);
+    }
+    .copy-btn svg { width: 0.95rem; height: 0.95rem; display: block; }
+    .copy-btn .icon-check { display: none; }
+    .copy-btn.copied {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      opacity: 1;
+    }
+    .copy-btn.copied .icon-copy  { display: none; }
+    .copy-btn.copied .icon-check { display: inline-block; }
     /* Platform subheading inside the install section. Sits between
        the section h2 and the per-method cards, so each OS group
        reads as its own visual block. */
@@ -774,7 +819,7 @@
         Applications. Signed with a Developer ID and notarized by Apple, so
         Gatekeeper opens it without a detour. Grant Accessibility when prompted —
         Mousehop lives in the menu bar.</p>
-      <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary">Download .dmg</a>
+      <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary">Download.dmg</a>
     </div>
 
     <h3 class="install-platform">Windows</h3>
@@ -786,25 +831,35 @@
       <p>Download the .zip from the releases page and extract anywhere. Run
         <code>mousehop.exe</code>. The Windows build isn't signed yet, so
         SmartScreen may prompt on first launch.</p>
-      <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary">Download .zip</a>
+      <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary">Download.zip</a>
     </div>
 
     <h3 class="install-platform">Linux</h3>
     <div class="install-grid">
       <div class="install-card">
         <h3>Flatpak</h3>
-        <p>Universal — works on any distro. Download <code>mousehop.flatpak</code>
-          from the latest release, then sideload it.</p>
-        <pre><code>flatpak install --user mousehop.flatpak
-flatpak run com.mousehop.Mousehop</code></pre>
+        <p>Universal — works on any distro. Download
+          <code>mousehop.flatpak</code> from the latest release, then sideload.</p>
+        <div class="code-block">
+          <pre><code>flatpak install --user mousehop.flatpak</code></pre>
+          <button class="copy-btn" type="button" aria-label="Copy to clipboard">
+            <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="install-card">
         <h3>AUR (Arch)</h3>
-        <p>Three variants — source build, prebuilt binary, or latest from main —
-          maintained alongside each release.</p>
-        <pre><code>paru -S mousehop      # source
-paru -S mousehop-bin  # binary
-paru -S mousehop-git  # latest</code></pre>
+        <p>Three variants: <code>mousehop</code> (source build),
+          <code>mousehop-bin</code> (prebuilt binary), or
+          <code>mousehop-git</code> (latest from main).</p>
+        <div class="code-block">
+          <pre><code>paru -S mousehop</code></pre>
+          <button class="copy-btn" type="button" aria-label="Copy to clipboard">
+            <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="install-card">
         <h3>Tarball</h3>
@@ -820,21 +875,39 @@ paru -S mousehop-git  # latest</code></pre>
         <h3>crates.io</h3>
         <p>One command from crates.io. Requires a Rust toolchain — and on Linux,
           GTK4 + libadwaita headers.</p>
-        <pre><code>cargo install mousehop</code></pre>
+        <div class="code-block">
+          <pre><code>cargo install mousehop</code></pre>
+          <button class="copy-btn" type="button" aria-label="Copy to clipboard">
+            <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="install-card">
         <h3>Nix flake</h3>
         <p>Build directly from the flake — the executable lands in
           <code>result/bin/mousehop</code>.</p>
-        <pre><code>nix build github:jondkinney/mousehop</code></pre>
+        <div class="code-block">
+          <pre><code>nix build github:jondkinney/mousehop</code></pre>
+          <button class="copy-btn" type="button" aria-label="Copy to clipboard">
+            <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="install-card">
         <h3>From source</h3>
         <p>Clone the repo and build with Cargo. See the README for per-distro
           dependency lists.</p>
-        <pre><code>git clone https://github.com/jondkinney/mousehop
+        <div class="code-block">
+          <pre><code>git clone https://github.com/jondkinney/mousehop
 cd mousehop
 cargo build --release</code></pre>
+          <button class="copy-btn" type="button" aria-label="Copy to clipboard">
+            <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -913,6 +986,32 @@ cargo build --release</code></pre>
       sync();
     });
     sync();
+  })();
+
+  // Copy-to-clipboard buttons on each install command block. Reads
+  // the literal text from the <code> child so multi-line blocks
+  // (git clone + cd + cargo build) come through with their newlines
+  // intact. Falls back silently if clipboard access is blocked
+  // (e.g. file:// without --user-data-dir, or denied by policy).
+  (function () {
+    var blocks = document.querySelectorAll('.code-block');
+    blocks.forEach(function (block) {
+      var btn  = block.querySelector('.copy-btn');
+      var code = block.querySelector('code');
+      if (!btn || !code) return;
+      btn.addEventListener('click', function () {
+        var text = code.textContent;
+        if (!navigator.clipboard || !navigator.clipboard.writeText) return;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.classList.add('copied');
+          btn.setAttribute('aria-label', 'Copied');
+          setTimeout(function () {
+            btn.classList.remove('copied');
+            btn.setAttribute('aria-label', 'Copy to clipboard');
+          }, 1500);
+        }).catch(function () { /* swallow — leave button as-is */ });
+      });
+    });
   })();
 </script>
 
