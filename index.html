@@ -361,6 +361,25 @@
     .feature-grid.compact .feature h3 { font-size: 1.05rem; }
     .feature-grid.compact .feature p { font-size: 0.92rem; }
 
+    /* Portrait screenshot of the main window. Max-height caps it so a
+       single tall image doesn't blow past the fold; max-width keeps it
+       readable on wider viewports without dominating. */
+    .screenshot {
+      display: flex;
+      justify-content: center;
+      margin: 2.5rem 0 3rem;
+    }
+    .screenshot img {
+      max-width: 340px;
+      width: 100%;
+      max-height: 640px;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.4),
+                  0 8px 20px -8px rgba(79, 70, 229, 0.25);
+      border: 1px solid var(--line);
+    }
+
     .featured {
       background: var(--bg-tint);
       padding: 1.75rem 1.9rem;
@@ -580,6 +599,12 @@
       interface.
     </p>
     <p class="aside">The name is the whole pitch — your mouse, hopping from one screen to the next.</p>
+  </section>
+
+  <section class="screenshot" aria-label="Mousehop main window">
+    <img src="assets/screenshot-prefs.png"
+         alt="The Mousehop main window: General settings (hostname, port, certificate fingerprint), Outgoing Auto-Release threshold, Outgoing and Incoming Connections with a peer paired and mDNS discovery on, and Clipboard Privacy with a Suppressed Apps list."
+         width="1065" height="1998" loading="lazy">
   </section>
 
   <section id="features">
