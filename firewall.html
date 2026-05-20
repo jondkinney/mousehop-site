@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<!--
+  Mousehop firewall setup guide — companion page to index.html.
+  Same styling, same nav. Inline CSS keeps the site build-free.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        var dark = stored ? stored === 'dark'
+          : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      } catch (e) {}
+    })();
+  </script>
+  <title>Firewall setup — Mousehop</title>
+  <meta name="description" content="How to allow incoming Mousehop connections through the firewall on Linux (UFW, firewalld), macOS, and Windows.">
+  <meta property="og:title" content="Mousehop — Firewall setup">
+  <meta property="og:description" content="Per-OS firewall configuration for Mousehop on Linux, macOS, and Windows.">
+  <meta property="og:type" content="article">
+  <meta property="og:image" content="https://mousehop.com/assets/mousehop-512.png">
+  <link rel="icon" type="image/svg+xml" href="assets/mousehop.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #ffffff;
+      --bg-tint: #f5f5fb;
+      --line: #e6e6f0;
+      --ink: #15151f;
+      --ink-soft: #393947;
+      --muted: #6c6c7e;
+      --accent: #4f46e5;
+      --accent-deep: #4338ca;
+      --accent-soft: #c7d2fe;
+      --code-bg: #1c1b2a;
+      --code-text: #e9e7f6;
+      --nav-bg: rgba(255, 255, 255, 0.9);
+      --max-width: 980px;
+      --radius: 8px;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #14141c;
+      --bg-tint: #1e1e2b;
+      --line: #30303f;
+      --ink: #ececf3;
+      --ink-soft: #c2c2cf;
+      --muted: #8d8d9e;
+      --accent: #8b93f8;
+      --accent-deep: #aab2fc;
+      --accent-soft: #3c3a78;
+      --code-bg: #0d0d15;
+      --code-text: #e9e7f6;
+      --nav-bg: rgba(20, 20, 28, 0.85);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+    a:hover { border-bottom-color: var(--accent); }
+
+    .container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    nav {
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--line);
+      background: var(--nav-bg);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    nav .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav .brand {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: none;
+    }
+    nav .brand img { width: 1.7rem; height: 1.7rem; }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.75rem;
+      margin: 0;
+      padding: 0;
+      font-size: 0.95rem;
+    }
+    nav ul a { color: var(--ink-soft); border: none; font-weight: 500; }
+    nav ul a:hover { color: var(--accent); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.15rem;
+      height: 2.15rem;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: var(--bg-tint);
+      color: var(--ink-soft);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .theme-toggle:hover {
+      color: var(--accent);
+      border-color: var(--accent-soft);
+    }
+    .theme-toggle:active { transform: scale(0.92); }
+    .theme-toggle svg {
+      width: 1.15rem;
+      height: 1.15rem;
+      display: block;
+    }
+    .theme-toggle .icon-sun { display: none; }
+    html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+    html[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+
+    body, nav, .featured, .install-featured, .install-card, .install-source {
+      transition: background-color 0.25s ease, border-color 0.25s ease,
+                  color 0.25s ease;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1.6rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 1rem;
+      transition: transform 0.1s, background 0.15s, box-shadow 0.15s;
+      border: 1.5px solid transparent;
+    }
+    .btn:hover { transform: translateY(-1px); border-bottom-color: transparent; }
+    .btn.primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 8px 20px -8px rgba(79, 70, 229, 0.6);
+    }
+    .btn.primary:hover { background: var(--accent-deep); }
+    .btn.secondary {
+      background: transparent;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+    .btn.secondary:hover { background: var(--ink); color: var(--bg); }
+    .btn.sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+    .btn svg { width: 1.05em; height: 1.05em; flex-shrink: 0; }
+
+    .page-hero {
+      padding: 3.5rem 0 1rem;
+      text-align: left;
+    }
+    .page-hero h1 {
+      font-size: clamp(2.2rem, 5.5vw, 3.4rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin: 0 0 0.5rem;
+      color: var(--ink);
+    }
+    .page-hero .tagline {
+      font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+      color: var(--muted);
+      max-width: 50rem;
+      margin: 0;
+    }
+
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.7rem;
+      margin: 1.75rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .toc li { margin: 0; }
+    .toc a {
+      display: inline-block;
+      padding: 0.3rem 0.85rem;
+      background: var(--bg-tint);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 0.88rem;
+      color: var(--ink-soft);
+      border-bottom: 1px solid var(--line);
+    }
+    .toc a:hover {
+      color: var(--accent);
+      border-color: var(--accent-soft);
+    }
+
+    section { padding: 2.5rem 0; position: relative; }
+    section + section { border-top: 1px solid var(--line); }
+
+    h2 {
+      font-size: clamp(1.6rem, 3.5vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin: 0 0 0.5rem;
+      color: var(--ink);
+    }
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      margin: 1.6rem 0 0.4rem;
+      color: var(--ink);
+    }
+    .section-intro {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 640px;
+      margin: 0 0 1.5rem;
+    }
+
+    p { margin: 0 0 1rem; color: var(--ink-soft); }
+    p:last-child { margin-bottom: 0; }
+    ul, ol { color: var(--ink-soft); padding-left: 1.4rem; }
+    li { margin-bottom: 0.4rem; }
+
+    code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+    code {
+      background: var(--bg-tint);
+      padding: 0.13rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.88em;
+      color: var(--accent-deep);
+    }
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 1.1rem 1.35rem;
+      border-radius: var(--radius);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      margin: 1rem 0;
+    }
+    pre code { background: transparent; padding: 0; color: inherit; font-size: 1em; }
+
+    .callout {
+      padding: 1.1rem 1.3rem;
+      background: var(--bg-tint);
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      margin: 1.25rem 0;
+    }
+    .callout p { margin: 0; color: var(--ink-soft); }
+    .callout p + p { margin-top: 0.6rem; }
+    .callout strong { color: var(--ink); }
+
+    footer {
+      padding: 3rem 0 4rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    footer p { margin: 0.4rem 0; }
+    footer .credits {
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--line);
+      font-size: 0.85rem;
+      max-width: 560px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    footer a { color: var(--ink-soft); border-bottom: 1px dotted var(--muted); }
+    footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    @media (max-width: 600px) {
+      nav { padding: 0.85rem 0; }
+      nav .container { flex-direction: column; gap: 0.8rem; }
+      .nav-right { flex-direction: column; gap: 0.85rem; }
+      nav ul { flex-wrap: wrap; justify-content: center; gap: 0.6rem 1.3rem; }
+      .page-hero { padding: 2.5rem 0 0.5rem; }
+      section { padding: 2rem 0; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <a href="/" class="brand"><img src="assets/mousehop.svg" alt="">Mousehop</a>
+    <div class="nav-right">
+      <ul>
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/#install">Install</a></li>
+        <li><a href="/#start">Quick start</a></li>
+        <li><a href="firewall.html">Firewall</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch color theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+        <a href="https://github.com/jondkinney/mousehop" class="btn secondary sm">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+          </svg>
+          GitHub
+        </a>
+        <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary sm">Download</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+  <section class="page-hero">
+    <h1>Firewall setup</h1>
+    <p class="tagline">Mousehop's daemon listens on <code>UDP 4252</code>. The receiving machine's firewall has to allow inbound traffic to that port — the sender never needs a rule.</p>
+    <ul class="toc">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#macos">macOS</a></li>
+      <li><a href="#windows">Windows</a></li>
+      <li><a href="#linux">Linux</a></li>
+      <li><a href="#discovery">mDNS discovery</a></li>
+      <li><a href="#verifying">Verifying</a></li>
+    </ul>
+  </section>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>When two machines link up, the one being connected <em>to</em> needs its firewall to accept an inbound UDP packet on port <code>4252</code>. Outbound traffic is allowed by default everywhere, so the sender never needs configuring. If you can only connect in one direction, it's the firewall on the receive side.</p>
+    <div class="callout">
+      <p><strong>Is opening this port safe?</strong> Yes. Mousehop pins each peer's TLS-certificate fingerprint and uses DTLS for the wire protocol. An unknown peer that reaches the port can't establish a session — the handshake is aborted before any input event can be processed. The firewall is defense-in-depth; the real auth lives in the protocol.</p>
+    </div>
+  </section>
+
+  <section id="macos">
+    <h2>macOS</h2>
+    <p class="section-intro">macOS uses an application-level firewall, not a port-level one. It's off by default on most installs, and Mousehop is signed and notarized, so most users have nothing to do.</p>
+
+    <h3>First launch</h3>
+    <p>The first time you start Mousehop, macOS may show: <em>"Do you want the application 'Mousehop' to accept incoming network connections?"</em> Click <strong>Allow</strong>. That's the whole flow.</p>
+
+    <h3>If you missed the prompt, or your firewall is locked down</h3>
+    <ol>
+      <li>Open <strong>System Settings → Network → Firewall</strong>.</li>
+      <li>If Firewall is <strong>off</strong>, nothing to do — skip this section.</li>
+      <li>If on, click <strong>Options…</strong>.</li>
+      <li>Click <strong>+</strong> and add <code>Mousehop.app</code> from <code>/Applications</code>.</li>
+      <li>Set the entry to <strong>Allow incoming connections</strong>.</li>
+      <li>Make sure <strong>Block all incoming connections</strong> is <em>off</em> — when that toggle is on, macOS ignores per-app allow rules.</li>
+    </ol>
+
+    <p>You don't need to think about ports on macOS. The application firewall trusts the app, not a specific socket.</p>
+  </section>
+
+  <section id="windows">
+    <h2>Windows</h2>
+    <p class="section-intro">Windows Defender Firewall is on by default and prompts the first time Mousehop tries to listen. Catching that prompt is the fast path.</p>
+
+    <h3>First launch</h3>
+    <p>You'll see a <strong>Windows Security Alert</strong> dialog: <em>"Do you want to allow Mousehop to communicate on these networks?"</em> with two checkboxes — <strong>Private networks</strong> and <strong>Public networks</strong>. Tick <strong>Private</strong> at minimum. Only tick <strong>Public</strong> if you genuinely want Mousehop to work on public wifi (most people don't — see the safety note in the overview above).</p>
+
+    <h3>If you missed the prompt (via the GUI)</h3>
+    <ol>
+      <li>Open <strong>Windows Security</strong> from the Start menu.</li>
+      <li>Go to <strong>Firewall &amp; network protection → Allow an app through firewall</strong>.</li>
+      <li>Click <strong>Change settings</strong>, then <strong>Allow another app…</strong>.</li>
+      <li>Browse to <code>Mousehop.exe</code> and add it.</li>
+      <li>Tick <strong>Private</strong> (and <strong>Public</strong> if you intend public-network use).</li>
+    </ol>
+
+    <h3>If you missed the prompt (via PowerShell)</h3>
+    <p>Run as Administrator:</p>
+    <pre><code>New-NetFirewallRule -DisplayName "Mousehop" -Direction Inbound `
+  -Protocol UDP -LocalPort 4252 -Action Allow -Profile Private</code></pre>
+    <p>This works even before Mousehop has been launched — useful for headless installs or imaging.</p>
+  </section>
+
+  <section id="linux">
+    <h2>Linux</h2>
+    <p class="section-intro">Linux is where most people get stuck, because there's no system-level prompt when an app binds a port. What you do depends on which firewall, if any, your distro ships with.</p>
+
+    <h3>First — check whether you have a firewall at all</h3>
+    <p>Plenty of Linux setups run with no firewall enabled: Arch base installs, NixOS without <code>networking.firewall.enable</code>, many bare server images. Before configuring anything, find out what's running:</p>
+    <pre><code>sudo ufw status              # Ubuntu, Debian, Mint, Pop!_OS, Omarchy
+sudo firewall-cmd --state    # Fedora, RHEL, CentOS Stream, openSUSE
+sudo systemctl is-active nftables    # generic / minimal distros</code></pre>
+    <p>If everything reports <em>inactive</em> / <em>not running</em>, nothing's blocking anything and Mousehop should just work. Skip ahead to <a href="#verifying">Verifying</a>.</p>
+
+    <h3 id="linux-ufw">UFW (Ubuntu, Debian, Mint, Pop!_OS, Omarchy)</h3>
+    <p>UFW rules can be scoped two ways. Both work; pick whichever fits your situation.</p>
+
+    <h3 style="font-size:1rem;margin-top:1.2rem;">By interface — survives subnet changes</h3>
+    <p>Allow inbound on a specific NIC. The rule sticks to the interface, so changing networks (a new router, a hotel wifi, a different ISP) keeps it working. Mousehop's per-peer fingerprint pinning means the broader exposure isn't actually a security concern — unknown peers can't establish a session even with the port open.</p>
+    <pre><code>sudo ufw allow in on wlan0 to any port 4252 proto udp comment 'mousehop'
+sudo ufw allow in on enp0s31f6 to any port 4252 proto udp comment 'mousehop'</code></pre>
+    <p>Run <code>ip -br link</code> to see your real interface names — usually something like <code>wlan0</code> or <code>wlp3s0</code> for wifi and <code>enp0s31f6</code> or <code>eth0</code> for ethernet.</p>
+
+    <h3 style="font-size:1rem;margin-top:1.2rem;">By subnet — most conservative</h3>
+    <p>Allow only from a specific LAN range. Mousehop is unreachable on any other network (café wifi, hotspots, hotel LANs). If you move to a different subnet you re-edit.</p>
+    <pre><code>sudo ufw allow from 192.168.1.0/24 to any port 4252 proto udp comment 'mousehop'</code></pre>
+
+    <p>Either way, verify with <code>sudo ufw status verbose</code>.</p>
+
+    <h3 id="linux-firewalld">firewalld (Fedora, RHEL, CentOS Stream, openSUSE)</h3>
+    <p>firewalld is zone-based. The rule almost certainly belongs in your <code>home</code> or <code>internal</code> zone — not <code>public</code>.</p>
+    <pre><code>sudo firewall-cmd --get-active-zones        # find which zone your NIC is in
+sudo firewall-cmd --zone=home --add-port=4252/udp --permanent
+sudo firewall-cmd --reload</code></pre>
+
+    <p>To scope by source subnet instead of a zone-wide allow, use a rich rule:</p>
+    <pre><code>sudo firewall-cmd --zone=home --add-rich-rule='rule family="ipv4" \
+  source address="192.168.1.0/24" port port="4252" protocol="udp" accept' \
+  --permanent
+sudo firewall-cmd --reload</code></pre>
+
+    <h3 id="linux-nft">nftables / iptables direct</h3>
+    <p>If you hand-maintain your ruleset, the rule you want is:</p>
+    <pre><code># nftables
+nft add rule inet filter input udp dport 4252 accept
+
+# iptables
+iptables -A INPUT -p udp --dport 4252 -j ACCEPT</code></pre>
+    <p>Persist however your distro expects — <code>nftables.service</code>, <code>iptables-persistent</code>, NixOS module options, a hand-rolled unit, etc.</p>
+  </section>
+
+  <section id="discovery">
+    <h2>A note on mDNS discovery</h2>
+    <p>Mousehop finds peers by hostname on the LAN using multicast DNS (mDNS) on <code>224.0.0.251:5353/udp</code>. Most firewalls already allow this — UFW permits it in its default <code>before-input</code> chain, firewalld's trusted/home zones include it, and macOS/Windows handle it transparently.</p>
+    <p>If peers <strong>show up in the UI but won't connect</strong>, the issue is <code>4252</code>. If they <strong>don't show up at all</strong>, you may additionally need to allow inbound <code>5353/udp</code> on the LAN interface — but try the <code>4252</code> rule first, since that's the far more common cause.</p>
+  </section>
+
+  <section id="verifying">
+    <h2>Verifying</h2>
+    <p>To confirm a peer can reach you:</p>
+    <ul>
+      <li>On the receiving machine, <code>sudo ss -tulnp | grep mousehop</code> shows the bound addresses. You should see <code>4252</code> on each LAN interface.</li>
+      <li>From a sender on the same network, <code>nc -u -zv &lt;receiver-ip&gt; 4252</code> probes reachability — but DTLS won't respond to a plain UDP probe, so a "succeeded" result only proves the firewall let the packet through, not that Mousehop accepted anything.</li>
+      <li>The clearest signal is the UI itself — does the peer appear and authorize? If yes, you're done.</li>
+    </ul>
+    <p>Still stuck? Open an <a href="https://github.com/jondkinney/mousehop/issues">issue</a> with your OS, firewall tool, and the output of the relevant <code>status</code> command.</p>
+  </section>
+
+</div>
+
+<footer>
+  <div class="container">
+    <p>Released under the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU GPL-3.0-or-later</a> license.</p>
+    <p>
+      <a href="https://github.com/jondkinney/mousehop">Source</a> &middot;
+      <a href="https://github.com/jondkinney/mousehop/issues">Issues</a> &middot;
+      <a href="https://github.com/jondkinney/mousehop/releases">Releases</a>
+    </p>
+    <p class="credits">
+      Original lan-mouse &copy; Ferdinand Schober and contributors. Mousehop fork
+      &copy; Jon Kinney. Mousehop stands on lan-mouse's shoulders — full credit to
+      feschber and the lan-mouse contributors for the foundation.
+    </p>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var toggle = document.getElementById('theme-toggle');
+    var root = document.documentElement;
+    function sync() {
+      toggle.setAttribute('aria-pressed', String(root.dataset.theme === 'dark'));
+    }
+    toggle.addEventListener('click', function () {
+      var next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try { localStorage.setItem('theme', next); } catch (e) {}
+      sync();
+    });
+    sync();
+  })();
+</script>
+
+</body>
+</html>
