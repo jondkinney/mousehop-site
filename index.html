@@ -169,9 +169,13 @@
                   color 0.25s ease;
     }
 
+    /* Hero is two stacked blocks:
+       (1) a centered brand row — logo beside "Mousehop"
+       (2) a 2-column grid — portrait screenshot on the left, tagline +
+           subtagline + CTAs + fork paragraph + attribution on the right
+       On narrow viewports the grid collapses to a single stack. */
     .hero {
-      padding: 4rem 0 1.5rem;
-      text-align: center;
+      padding: 3.5rem 0 1.5rem;
       position: relative;
       overflow: hidden;
     }
@@ -189,12 +193,46 @@
     }
     .hero > * { position: relative; z-index: 1; }
 
+    .hero-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+    .hero-main {
+      display: grid;
+      grid-template-columns: minmax(0, 360px) 1fr;
+      gap: 2.5rem 3rem;
+      align-items: start;
+    }
+
+    /* The shipped screenshot includes the app's own brand strip
+       (purple logo + "Mousehop" title) at the top, which would
+       duplicate the hero brand row above. Fixed-height container +
+       object-position: bottom clips the top of the image so the
+       visible region starts at the "General" section header. */
+    .hero-screenshot {
+      height: 525px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.4),
+                  0 8px 20px -8px rgba(79, 70, 229, 0.25);
+    }
+    .hero-screenshot img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 100%;
+    }
+
     .hero-mark {
       width: 84px;
       height: 84px;
       border-radius: 19px;
       box-shadow: 0 12px 32px -10px rgba(79, 70, 229, 0.5);
-      margin-bottom: 1.4rem;
     }
     .section-head {
       display: flex;
@@ -230,15 +268,15 @@
       0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent); }
       100% { box-shadow: 0 0 0 10px transparent; }
     }
-    .hero h1 {
-      font-size: clamp(2.8rem, 7vw, 4.6rem);
+    .hero-brand h1 {
+      font-size: clamp(3rem, 8vw, 5.5rem);
       font-weight: 800;
       letter-spacing: -0.035em;
-      margin: 0 0 0.6rem;
+      margin: 0;
       color: var(--ink);
     }
     .hero .tagline {
-      font-size: clamp(1.2rem, 2.6vw, 1.7rem);
+      font-size: clamp(1.15rem, 2vw, 1.5rem);
       font-weight: 600;
       letter-spacing: -0.015em;
       color: var(--ink);
@@ -248,13 +286,28 @@
       font-size: 1.08rem;
       color: var(--muted);
       max-width: 44rem;
-      margin: 0 auto 2.25rem;
+      margin: 0 0 1.5rem;
+    }
+    .hero .aside {
+      font-size: 0.88rem;
+      font-style: italic;
+      color: var(--muted);
+      opacity: 0.85;
+      margin: 1.25rem 0 0;
+      text-align: left;
+      max-width: none;
+    }
+    .hero-about {
+      font-size: 1.02rem;
+      line-height: 1.65;
+      color: var(--ink-soft);
+      margin: 1.5rem 0 0;
     }
 
     .cta {
       display: flex;
       gap: 1rem;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
       flex-wrap: wrap;
     }
@@ -321,20 +374,18 @@
       margin: 0 0 2.5rem;
     }
 
-    .about { padding-bottom: 1rem; }
-    .about p {
-      font-size: 1.22rem;
-      line-height: 1.6;
-      color: var(--ink-soft);
-      max-width: 730px;
-      margin: 0 auto;
-      text-align: center;
-    }
-    .about .aside {
-      font-size: 0.98rem;
-      font-style: italic;
-      color: var(--muted);
-      margin-top: 1rem;
+    /* Stack the hero on narrow viewports: brand row stays centered,
+       grid collapses to single column with image on top and text
+       centered below. */
+    @media (max-width: 720px) {
+      .hero-brand h1 { font-size: clamp(2.4rem, 9vw, 3.4rem); }
+      .hero-mark { width: 64px; height: 64px; }
+      .hero-main { grid-template-columns: 1fr; }
+      .hero-screenshot { max-width: 320px; height: 420px; margin: 0 auto; }
+      .hero-content { text-align: center; }
+      .hero .subtagline { margin-left: auto; margin-right: auto; }
+      .cta { justify-content: center; }
+      .hero .aside { text-align: center; }
     }
 
     .feature-grid {
@@ -360,25 +411,6 @@
     }
     .feature-grid.compact .feature h3 { font-size: 1.05rem; }
     .feature-grid.compact .feature p { font-size: 0.92rem; }
-
-    /* Portrait screenshot of the main window. Max-height caps it so a
-       single tall image doesn't blow past the fold; max-width keeps it
-       readable on wider viewports without dominating. */
-    .screenshot {
-      display: flex;
-      justify-content: center;
-      margin: 2.5rem 0 3rem;
-    }
-    .screenshot img {
-      max-width: 340px;
-      width: 100%;
-      max-height: 640px;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.4),
-                  0 8px 20px -8px rgba(79, 70, 229, 0.25);
-      border: 1px solid var(--line);
-    }
 
     .featured {
       background: var(--bg-tint);
@@ -467,6 +499,17 @@
       color: var(--muted);
       margin-top: 1.5rem;
     }
+    /* Platform subheading inside the install section. Sits between
+       the section h2 and the per-method cards, so each OS group
+       reads as its own visual block. */
+    h3.install-platform {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin: 2.5rem 0 1rem;
+    }
+    h3.install-platform:first-of-type { margin-top: 0.25rem; }
 
     .quickstart ol {
       counter-reset: step;
@@ -538,6 +581,7 @@
         <li><a href="#features">Features</a></li>
         <li><a href="#install">Install</a></li>
         <li><a href="#start">Quick start</a></li>
+        <li><a href="firewall.html">Firewall</a></li>
       </ul>
       <div class="nav-actions">
         <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch color theme">
@@ -571,40 +615,40 @@
 <div class="container">
 
   <section class="hero">
-    <img src="assets/mousehop.svg" alt="Mousehop logo" class="hero-mark">
-    <h1>Mousehop</h1>
-    <p class="tagline">One mouse. One keyboard. Every machine.</p>
-    <p class="subtagline">
-      Mousehop is an open-source software KVM — glide a single cursor, keyboard,
-      and clipboard across your Linux, macOS, and Windows machines over the local
-      network. No KVM hardware, no cloud.
-    </p>
-    <div class="cta">
-      <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary">Download</a>
-      <a href="https://github.com/jondkinney/mousehop" class="btn secondary">
-        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
-        </svg>
-        Star on GitHub
-      </a>
+    <div class="hero-brand">
+      <img src="assets/mousehop.svg" alt="Mousehop logo" class="hero-mark">
+      <h1>Mousehop</h1>
     </div>
-  </section>
-
-  <section class="about">
-    <p>
-      Mousehop is a fork of <a href="https://github.com/feschber/lan-mouse">lan-mouse</a>,
-      Ferdinand Schober's fast, encrypted, cross-platform input-sharing daemon. It keeps
-      that Rust-native core intact and builds on top — clipboard sync, a native macOS
-      menu-bar app, a system tray, per-peer tuning, sturdier discovery, and a refreshed
-      interface.
-    </p>
-    <p class="aside">The name is the whole pitch — your mouse, hopping from one screen to the next.</p>
-  </section>
-
-  <section class="screenshot" aria-label="Mousehop main window">
-    <img src="assets/screenshot-prefs.png"
-         alt="The Mousehop main window: General settings (hostname, port, certificate fingerprint), Outgoing Auto-Release threshold, Outgoing and Incoming Connections with a peer paired and mDNS discovery on, and Clipboard Privacy with a Suppressed Apps list."
-         width="1065" height="1998" loading="lazy">
+    <div class="hero-main">
+      <div class="hero-screenshot">
+        <img src="assets/screenshot-prefs.png"
+             alt="The Mousehop main window: General settings (hostname, port, certificate fingerprint), Outgoing Auto-Release threshold, Outgoing and Incoming Connections with a peer paired and mDNS discovery on, and Clipboard Privacy with a Suppressed Apps list."
+             width="1065" height="1998" loading="lazy">
+      </div>
+      <div class="hero-content">
+        <p class="tagline">One mouse. One keyboard. Every machine.</p>
+        <p class="subtagline">
+          Mousehop is an open-source software KVM — glide a single cursor, keyboard,
+          and clipboard across your Linux, macOS, and Windows machines over the local
+          network. No KVM hardware, no cloud.
+        </p>
+        <div class="cta">
+          <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary">Download</a>
+          <a href="https://github.com/jondkinney/mousehop" class="btn secondary">
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+            </svg>
+            Star on GitHub
+          </a>
+        </div>
+        <p class="aside">The name is the whole pitch — your mouse, hopping from screen to screen.</p>
+        <p class="hero-about">
+          Mousehop is a fork of <a href="https://github.com/feschber/lan-mouse">lan-mouse</a>,
+          Ferdinand Schober's fast, encrypted, cross-platform input-sharing daemon. It keeps
+          that Rust-native core intact and builds on top.
+        </p>
+      </div>
+    </div>
   </section>
 
   <section id="features">
@@ -716,52 +760,88 @@
   <section id="install">
     <h2>Install</h2>
     <p class="section-intro">
-      Mousehop runs on Linux (Wayland), macOS, and Windows. Download a release
-      build, install it with Cargo or Nix, or build from source.
+      Mousehop runs on Linux (Wayland), macOS, and Windows. Native binaries,
+      Flatpak, AUR, crates.io, and Nix — pick what fits your setup.
     </p>
 
+    <h3 class="install-platform">macOS</h3>
     <div class="install-featured">
       <div class="install-featured-head">
-        <h3>macOS</h3>
+        <h3>Signed + notarized DMG</h3>
         <span class="install-badge">Apple Silicon &amp; Intel</span>
       </div>
-      <p>Download the macOS build from the releases page and move Mousehop into your
-        Applications folder. It's signed with a Developer ID and notarized by Apple,
-        so it launches with no Gatekeeper detour — just grant Accessibility when
-        prompted. Mousehop lives in the menu bar.</p>
+      <p>Download the .dmg from the releases page and drag Mousehop into
+        Applications. Signed with a Developer ID and notarized by Apple, so
+        Gatekeeper opens it without a detour. Grant Accessibility when prompted —
+        Mousehop lives in the menu bar.</p>
+      <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary">Download .dmg</a>
     </div>
 
+    <h3 class="install-platform">Windows</h3>
+    <div class="install-featured">
+      <div class="install-featured-head">
+        <h3>ZIP archive</h3>
+        <span class="install-badge">x86_64</span>
+      </div>
+      <p>Download the .zip from the releases page and extract anywhere. Run
+        <code>mousehop.exe</code>. The Windows build isn't signed yet, so
+        SmartScreen may prompt on first launch.</p>
+      <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary">Download .zip</a>
+    </div>
+
+    <h3 class="install-platform">Linux</h3>
     <div class="install-grid">
       <div class="install-card">
-        <h3>Release binaries</h3>
-        <p>Prebuilt Windows, macOS, and Linux builds, ready to run.</p>
-        <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary">Releases</a>
+        <h3>Flatpak</h3>
+        <p>Universal — works on any distro. Download <code>mousehop.flatpak</code>
+          from the latest release, then sideload it.</p>
+        <pre><code>flatpak install --user mousehop.flatpak
+flatpak run com.mousehop.Mousehop</code></pre>
       </div>
       <div class="install-card">
-        <h3>cargo</h3>
-        <p>On Linux, one command — with a Rust toolchain and GTK4 + libadwaita headers.</p>
+        <h3>AUR (Arch)</h3>
+        <p>Three variants — source build, prebuilt binary, or latest from main —
+          maintained alongside each release.</p>
+        <pre><code>paru -S mousehop      # source
+paru -S mousehop-bin  # binary
+paru -S mousehop-git  # latest</code></pre>
+      </div>
+      <div class="install-card">
+        <h3>Tarball</h3>
+        <p>Prebuilt <code>x86_64</code> and <code>aarch64</code> tarballs ship with
+          every release — for distros without an AUR or Flatpak path.</p>
+        <a href="https://github.com/jondkinney/mousehop/releases/latest" class="btn primary">Releases</a>
+      </div>
+    </div>
+
+    <h3 class="install-platform">Build it yourself</h3>
+    <div class="install-grid">
+      <div class="install-card">
+        <h3>crates.io</h3>
+        <p>One command from crates.io. Requires a Rust toolchain — and on Linux,
+          GTK4 + libadwaita headers.</p>
         <pre><code>cargo install mousehop</code></pre>
       </div>
       <div class="install-card">
         <h3>Nix flake</h3>
-        <p>Build the flake directly — the executable lands in <code>result/bin</code>.</p>
-        <pre><code>nix build</code></pre>
+        <p>Build directly from the flake — the executable lands in
+          <code>result/bin/mousehop</code>.</p>
+        <pre><code>nix build github:jondkinney/mousehop</code></pre>
       </div>
-    </div>
-
-    <div class="install-source">
-      <h3>Build from source</h3>
-      <p>Requires a Rust toolchain and GTK4 + libadwaita development headers. See the
-        repository README for per-distro dependency lists.</p>
-      <pre><code>git clone https://github.com/jondkinney/mousehop
+      <div class="install-card">
+        <h3>From source</h3>
+        <p>Clone the repo and build with Cargo. See the README for per-distro
+          dependency lists.</p>
+        <pre><code>git clone https://github.com/jondkinney/mousehop
 cd mousehop
 cargo build --release</code></pre>
+      </div>
     </div>
 
     <p class="install-note">
       Migrating from lan-mouse? Mousehop reads its own config at
-      <code>~/.config/mousehop/</code> and speaks its own wire protocol, so the two
-      install and run side by side without interfering.
+      <code>~/.config/mousehop/</code> and speaks its own wire protocol, so the
+      two install and run side by side without interfering.
     </p>
   </section>
 
@@ -791,6 +871,13 @@ cargo build --release</code></pre>
           keyboard and clipboard (if enabled) follow.</p>
       </li>
     </ol>
+
+    <p class="install-note">
+      If a peer doesn't appear after a moment, the receiving machine's firewall is
+      almost certainly the cause — Linux usually needs an explicit rule, while macOS
+      and Windows prompt on first launch. See
+      <a href="firewall.html">Firewall setup</a> for per-OS instructions.
+    </p>
   </section>
 
 </div>
