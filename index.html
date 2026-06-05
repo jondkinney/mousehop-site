@@ -706,14 +706,6 @@
     <div class="featured">
       <div class="featured-row">
         <div class="feature">
-          <h3>Clipboard sync</h3>
-          <p>Bi-directional clipboard text sync between paired machines — off by
-            default, gated per pair in each direction. An app-suppression list keeps
-            password managers and sensitive apps from ever leaving the device; on
-            macOS, clipboards flagged <code>ConcealedType</code> are blocked
-            automatically.</p>
-        </div>
-        <div class="feature">
           <h3>Native macOS app</h3>
           <p>A proper menu-bar app — no Dock clutter. A native prompt when you grant
             Accessibility, a TCC watcher that reacts the instant permissions change,
@@ -725,19 +717,49 @@
             glyph, plus the macOS menu-bar item. Closing the
             window tucks Mousehop away instead of quitting — the daemon keeps running.</p>
         </div>
+        <div class="feature">
+          <h3>Clipboard sync</h3>
+          <p>Bi-directional clipboard text sync between paired machines — off by
+            default, gated per pair and direction. An app-suppression list keeps
+            password managers off the wire; on macOS, <code>ConcealedType</code>
+            clipboards are blocked automatically.</p>
+        </div>
       </div>
     </div>
 
     <div class="feature-grid compact">
       <div class="feature">
-        <h3>Per-peer tuning</h3>
-        <p>Set natural-scroll direction and pointer sensitivity independently for
-          each connected machine, right from its connection row.</p>
+        <h3>Native key repeat</h3>
+        <p>Hold a key and the forwarded repeats follow the receiving machine's own
+          keyboard settings — initial delay and rate — instead of one fixed speed.
+          Change the sliders and it tracks them live.</p>
       </div>
       <div class="feature">
-        <h3>Peer version exchange</h3>
-        <p>Linked machines trade build versions and the UI soft-warns when they
-          drift apart, so a mismatch is obvious before it bites.</p>
+        <h3>Survives sleep &amp; display changes</h3>
+        <p>Reconnects cleanly after a machine sleeps and wakes, and re-reads screen
+          geometry when you attach or unplug a monitor, so the crossing edges stay
+          where you put them.</p>
+      </div>
+      <div class="feature">
+        <h3>Auto, Fastest, or pinned</h3>
+        <p>For a peer with several addresses, choose how Mousehop connects: Auto
+          races every address, Fastest locks onto the lowest-latency one, or pin a
+          specific IP per network. Works over IPv4 or IPv6 dual-stack.</p>
+      </div>
+      <div class="feature">
+        <h3>Custom release shortcut</h3>
+        <p>Record your own hotkey in Preferences to release captured input and snap
+          the cursor back to the host machine.</p>
+      </div>
+      <div class="feature">
+        <h3>Screen-lock aware</h3>
+        <p>Mousehop suppresses edge crossings while the host's screen is locked, so
+          a locked Mac or PC never swallows your cursor.</p>
+      </div>
+      <div class="feature">
+        <h3>Seamless handoff</h3>
+        <p>Your cursor keeps its cross-axis position when it crosses to another
+          machine, with wall-press auto-release and host-cursor warp-back.</p>
       </div>
       <div class="feature">
         <h3>Sturdier discovery</h3>
@@ -746,20 +768,14 @@
           on real networks.</p>
       </div>
       <div class="feature">
-        <h3>Seamless handoff</h3>
-        <p>Your cursor keeps its cross-axis position when it crosses to another
-          machine, with wall-press auto-release and host-cursor warp-back.</p>
+        <h3>Peer version exchange</h3>
+        <p>Linked machines trade build versions and the UI soft-warns when they
+          drift apart, so a mismatch is obvious before it bites.</p>
       </div>
       <div class="feature">
-        <h3>Screen-lock aware</h3>
-        <p>Mousehop suppresses edge crossings while the host's screen is locked, so
-          a locked Mac or PC never swallows your cursor.</p>
-      </div>
-      <div class="feature">
-        <h3>Refreshed interface</h3>
-        <p>The GTK + libadwaita frontend got a roomier, scrollable layout, richer
-          connection rows with in-place updates, tidier modals, and Esc / Cmd-W to
-          dismiss.</p>
+        <h3>Per-peer tuning</h3>
+        <p>Set natural-scroll direction and pointer sensitivity independently for
+          each connected machine, right from its connection row.</p>
       </div>
     </div>
   </section>
