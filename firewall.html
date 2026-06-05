@@ -380,6 +380,7 @@
     <p class="tagline">Mousehop's daemon listens on <code>UDP 4252</code>. The receiving machine's firewall has to allow inbound traffic to that port — the sender never needs a rule.</p>
     <ul class="toc">
       <li><a href="#overview">Overview</a></li>
+      <li><a href="#quick">Quick path</a></li>
       <li><a href="#macos">macOS</a></li>
       <li><a href="#windows">Windows</a></li>
       <li><a href="#linux">Linux</a></li>
@@ -393,6 +394,28 @@
     <p>When two machines link up, the one being connected <em>to</em> needs its firewall to accept an inbound UDP packet on port <code>4252</code>. Outbound traffic is allowed by default everywhere, so the sender never needs configuring. If you can only connect in one direction, it's the firewall on the receive side.</p>
     <div class="callout">
       <p><strong>Is opening this port safe?</strong> Yes. Mousehop pins each peer's TLS-certificate fingerprint and uses DTLS for the wire protocol. An unknown peer that reaches the port can't establish a session — the handshake is aborted before any input event can be processed. The firewall is defense-in-depth; the real auth lives in the protocol.</p>
+    </div>
+  </section>
+
+  <section id="quick">
+    <h2>Quick path: <code>mousehop firewall</code></h2>
+    <p class="section-intro">Mousehop ships a subcommand that detects your active firewall and adds the inbound rule for you — the one-command alternative to the manual steps below.</p>
+
+    <pre><code>sudo mousehop firewall            # Linux: detect the firewall and add the rule
+mousehop firewall                 # Windows: run from an elevated (Administrator) shell
+mousehop firewall --dry-run       # print what it would do, change nothing
+sudo mousehop firewall --remove   # tear the rule back out</code></pre>
+
+    <p>It opens the port Mousehop is actually configured to use (default <code>4252</code>), so a custom port is handled automatically. What happens depends on what's running:</p>
+    <ul>
+      <li><strong>UFW</strong> and <strong>firewalld</strong> — adds the rule directly (firewalld on your <em>default</em> zone, then reloads).</li>
+      <li><strong>Windows Firewall</strong> — adds an inbound UDP rule via <code>netsh advfirewall</code>.</li>
+      <li><strong>nftables</strong> / <strong>iptables</strong> — <em>prints</em> the exact rule instead of running it, because the right table/chain is site-specific. Copy it into your ruleset.</li>
+      <li><strong>macOS</strong> — prints guidance only; the application firewall is per-app and off by default, so a signed Mousehop needs no port rule.</li>
+    </ul>
+
+    <div class="callout">
+      <p>Want a tighter rule — scoped to one interface or subnet, or pinned to a specific firewalld zone? <code>mousehop firewall</code> opens the port broadly (peer fingerprint pinning keeps that safe — see above). For finer control, use the per-OS manual steps below instead.</p>
     </div>
   </section>
 
@@ -466,7 +489,7 @@ sudo ufw allow in on enp0s31f6 to any port 4252 proto udp comment 'mousehop'</co
     <p>Either way, verify with <code>sudo ufw status verbose</code>.</p>
 
     <h3 id="linux-firewalld">firewalld (Fedora, RHEL, CentOS Stream, openSUSE)</h3>
-    <p>firewalld is zone-based. The rule almost certainly belongs in your <code>home</code> or <code>internal</code> zone — not <code>public</code>.</p>
+    <p>firewalld is zone-based. The rule almost certainly belongs in your <code>home</code> or <code>internal</code> zone — not <code>public</code>. Note that <code>mousehop firewall</code> adds the port to your <em>default</em> zone for speed; if your LAN interface is assigned to <code>home</code> or <code>internal</code> instead, use the zone-scoped commands below.</p>
     <pre><code>sudo firewall-cmd --get-active-zones        # find which zone your NIC is in
 sudo firewall-cmd --zone=home --add-port=4252/udp --permanent
 sudo firewall-cmd --reload</code></pre>
